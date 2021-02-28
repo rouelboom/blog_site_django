@@ -33,6 +33,9 @@ class Post(models.Model):
                               verbose_name="Сообщество",
                               blank=True, null=True,
                               help_text="Запись может не иметь сообщества")
+    image = models.ImageField("Изображение",
+                              upload_to='posts/',
+                              blank=True, null=True)  
 
     class Meta:
         ordering = ['-pub_date']
@@ -42,19 +45,20 @@ class Post(models.Model):
     def __str__(self):
         return self.text[:15]
 
-
-class Follow(models.Model):
-    user = models.ForeignKey(User, related_name='follower',
-                             verbose_name='Подписчик',
-                             on_delete=models.SET_NULL)
-    author = models.ForeignKey(User, related_name='following',
-                               verbose_name='Автор',
-                               on_delete=models.CASCADE)
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE,
+                             related_name="comments",
+                             verbose_name="Комментарий",
+                             help_text="Комментарии к этому посту")
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name="comments",
+                               verbose_name="Автор комментария",
+                               help_text="Комментарий автора")
+    text = models.TextField("Текст комментария",
+                            help_text="Поле обязательно для заполнения")
+    created = models.DateTimeField("Дата публикации", auto_now_add=True)
 
     class Meta:
-        ordering = ['-pub_date']
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-
-    def __str__(self):
-        return self.text[:15]
+        ordering = ['-created']
+        verbose_name = "Комментарий"
+        verbose_name_plural = "Комментарии"

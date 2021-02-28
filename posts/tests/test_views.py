@@ -1,3 +1,8 @@
+import shutil
+import tempfile
+
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
@@ -9,6 +14,20 @@ class PostPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
+        cls.small_img = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        cls.uploaded = SimpleUploadedFile(
+            name='small.jpg',
+            content=cls.small_img,
+            content_type='image/gif'
+        )
+
         cls.group = Group.objects.create(
             title='Заголовок',
             description='Текст',
@@ -19,7 +38,14 @@ class PostPagesTests(TestCase):
             text='Проверочный текст',
             author=cls.user2,
             group=cls.group
+            image = cls.uploaded
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        # shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        pass
 
     def setUp(self):
         self.guest_client = Client()
@@ -57,6 +83,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(post.text, PostPagesTests.post.text)
         self.assertEqual(post.author, PostPagesTests.post.author)
         self.assertEqual(post.group, PostPagesTests.post.group)
+        self.assertEqual(post.image, PostPagesTests.post.image)
 
     def test_groups_page_has_correct_context(self):
         """Провера контекста страницы с записями сообщества"""
@@ -70,6 +97,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(group.slug, PostPagesTests.group.slug)
         self.assertEqual(post.group.title, PostPagesTests.group.title)
         self.assertEqual(post.text, PostPagesTests.post.text)
+        self.assertEqual(post.image, PostPagesTests.post.image)
 
     def test_new_post_has_correct_context(self):
         """Проверка контекста страницы создания новой записи"""
@@ -142,6 +170,9 @@ class PostPagesTests(TestCase):
         self.assertIn(PostPagesTests.post, page)
         author = response.context['author']
         self.assertEqual(self.user2, author)
+        ### added after 5 sprint
+        image = response.context['page'][0].image
+        self.assertEqual(image, PostPagesTests.post.image)
 
     def test_specific_post_has_correct_context(self):
         """Проверка контекста страницы конкретной записи"""
@@ -155,6 +186,17 @@ class PostPagesTests(TestCase):
         post = response.context['post']
         self.assertEqual(PostPagesTests.post, post)
         self.assertEqual(self.user2, post.author)
+
+    def test_correct_404_redirect(self):
+        """ Проверка: при срабатывании ошибки 404
+            вызывается корректный шаблон"""
+        response = self.client.get('/not_valid_url/')
+        self.assertTemplateUsed(response, 'misc/404.html')
+
+
+    def test_with_image_need_to_change_this_name(self):
+        pass
+
 
 
 class PaginatorViewsTest(TestCase):

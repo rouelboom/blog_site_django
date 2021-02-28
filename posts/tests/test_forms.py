@@ -1,3 +1,7 @@
+import shutil
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -67,3 +71,32 @@ class FormsPagesTests(TestCase):
         self.assertTrue(Post.objects.filter(text='Пост c группой',
                                             group=FormsPagesTests.
                                             group).exists())
+
+    def test_post_creation_with_image(self):
+        """ Попытка создания валидного поста с картинкой"""
+        small_img = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.jpg',
+            content=small_img,
+            content_type='image/gif'
+        )
+        posts_count = Post.objects.count()
+        form_data = {
+            'text': 'Пост c группой',
+            'group': FormsPagesTests.group.id,
+            'image': uploaded
+        }
+        response = self.authorized_client.post(
+            reverse('posts:new_post'),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(response, reverse('posts:index'))
+        self.assertEqual(Post.objects.count(), posts_count + 1)
+        self.assertTrue(Post.objects.filter(text='Пост c группой').exists())
