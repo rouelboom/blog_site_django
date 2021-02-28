@@ -1,19 +1,16 @@
 {% extends "base.html" %}
 {% load cache %}
-{% block title %} Последние обновления {% endblock %}
-{% block header %}Последние обновления на сайте{% endblock %}
+{% block title %} Подписки пользователя {{ post.author.username }}{% endblock %}
+{% block header %}Подписки пользователя {{ post.author.username }}{% endblock %}
 {% block content %}
 
     <div class="container">
 
-            {% include "includes/menu.html" with index=True %}
-
-            {% cache 20 index_page %}
+                {% cache 20 index_page %}
                 {% for post in page %}
                     {% include "includes/post_item.html" with post=post %}
                 {% endfor %}
-            {% endcache %}
-
+                {% endcache %}
     </div>
 
         <!-- Вывод паджинатора -->
