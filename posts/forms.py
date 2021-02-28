@@ -12,6 +12,8 @@ class PostForm(forms.ModelForm):
         widgets = {"text": Textarea(attrs={"placeholder":
                                            "Введите текст записи",
                                            })}
+
+
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment

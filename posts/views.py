@@ -3,7 +3,6 @@ from http import HTTPStatus
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import cache_page
 from django.http import HttpResponse
 
 from .forms import PostForm, CommentForm
@@ -11,7 +10,6 @@ from .models import Post, Group, User, Comment, Follow
 from django.conf import settings
 
 
-# @cache_page(20)
 def index(request):
     post_list = Post.objects.all()
 
@@ -96,13 +94,15 @@ def post_edit(request, username, post_id):
     if not edited_post.author == request.user:
         return redirect('posts:post', username, post_id)
 
-    form = PostForm(request.POST or None, files=request.FILES or None, instance=edited_post)
+    form = PostForm(request.POST or None, files=request.FILES or None,
+                    instance=edited_post)
     if request.method == 'POST' and form.is_valid():
         edited_post.save()
         return redirect('posts:post', username, post_id)
     return render(request, 'new_post.html', {
                   'form': form,
                   'post': edited_post})
+
 
 @login_required
 def add_comment(request, username, post_id):
@@ -165,4 +165,3 @@ def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
     Follow.objects.filter(user=request.user, author=author).delete()
     return redirect('posts:profile', username)
-

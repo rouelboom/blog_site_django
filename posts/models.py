@@ -35,7 +35,7 @@ class Post(models.Model):
                               help_text="Запись может не иметь сообщества")
     image = models.ImageField("Изображение",
                               upload_to='posts/',
-                              blank=True, null=True)  
+                              blank=True, null=True)
 
     class Meta:
         ordering = ['-pub_date']
@@ -82,7 +82,6 @@ class Follow(models.Model):
         constraints = [
             models.UniqueConstraint(fields=('user', 'author'), name='no_twice')
         ]
-
 
     def __str__(self):
         return f'{self.user} является подписчиков {self.author}'
