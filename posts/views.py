@@ -7,7 +7,7 @@ from django.views.decorators.cache import cache_page
 from django.http import HttpResponse
 
 from .forms import PostForm, CommentForm
-from .models import Post, Group, User, Comment
+from .models import Post, Group, User, Comment, Follow
 from django.conf import settings
 
 
@@ -95,6 +95,7 @@ def post_edit(request, username, post_id):
                   'form': form,
                   'post': edited_post})
 
+@login_required
 def add_comment(request, username, post_id):
     post = get_object_or_404(Post, id=post_id)
     author = get_object_or_404(User, username=username)
@@ -105,11 +106,8 @@ def add_comment(request, username, post_id):
             comment.post = post
             comment.author = author
             comment.save()
-            comments = Comment.objects.filter(post=post).all()
-            return render(request, 'post.html', {"author": post.author,
-                                                 "post": post,
-                                                 'comments': comments,
-                                                 'form': CommentForm()})
+            return redirect('posts:post', username, post_id)
+    return redirect('posts:post', username, post_id)
 
 
 def page_not_found(request, exception):
@@ -122,19 +120,37 @@ def page_not_found(request, exception):
         status=404
     )
 
+
 def server_error(request):
     return render(request, "misc/500.html", status=500)
+
 
 @login_required
 def follow_index(request):
     # информация о текущем пользователе доступна в переменной request.user
-    # ...
-    return render(request, "follow.html", {})
+    following = Follow.objects.filter(user=request.user)
+    print(following)
+    post_list = Post.objects.all()
+
+    paginator = Paginator(post_list, settings.PAGINATOR_LENTH)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
+
+    return render(request, "follow.html", {
+                  "page": page,
+                  "paginator": paginator
+                  })
+
 
 @login_required
 def profile_follow(request, username):
-    # ...
-    pass
+    author = get_object_or_404(User, username=username)
+    Follow.objects.create(
+        user=request.user,
+        author=author
+    )
+    print(Follow.objects.all())
+    return profile(request, username)
 
 
 @login_required
