@@ -1,7 +1,3 @@
-import shutil
-import tempfile
-
-from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -37,8 +33,8 @@ class PostPagesTests(TestCase):
         cls.post = Post.objects.create(
             text='Проверочный текст',
             author=cls.user2,
-            group=cls.group
-            image = cls.uploaded
+            group=cls.group,
+            image=cls.uploaded
         )
 
     @classmethod
@@ -170,7 +166,6 @@ class PostPagesTests(TestCase):
         self.assertIn(PostPagesTests.post, page)
         author = response.context['author']
         self.assertEqual(self.user2, author)
-        ### added after 5 sprint
         image = response.context['page'][0].image
         self.assertEqual(image, PostPagesTests.post.image)
 
@@ -193,10 +188,8 @@ class PostPagesTests(TestCase):
         response = self.client.get('/not_valid_url/')
         self.assertTemplateUsed(response, 'misc/404.html')
 
-
     def test_with_image_need_to_change_this_name(self):
         pass
-
 
 
 class PaginatorViewsTest(TestCase):
