@@ -6,11 +6,14 @@
 
     <div class="container">
 
-                {% cache 20 index_page %}
-                {% for post in page %}
-                    {% include "includes/post_item.html" with post=post %}
-                {% endfor %}
-                {% endcache %}
+        {% include "includes/menu.html" with index=True %}
+
+
+            {% for post in page %}
+                {% include "includes/post_item.html" with post=post %}
+            {% endfor %}
+
+
     </div>
 
         <!-- Вывод паджинатора -->
