@@ -1,15 +1,21 @@
+import shutil
+import tempfile
+
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
-from posts.models import Group, User, Post
+from posts.models import Group, User, Post, Follow
 
 
 class PostPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
+        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
         cls.small_img = (
             b'\x47\x49\x46\x38\x39\x61\x01\x00'
@@ -40,7 +46,7 @@ class PostPagesTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        # shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
         pass
 
     def setUp(self):
@@ -188,8 +194,82 @@ class PostPagesTests(TestCase):
         response = self.client.get('/not_valid_url/')
         self.assertTemplateUsed(response, 'misc/404.html')
 
-    def test_with_image_need_to_change_this_name(self):
-        pass
+    def test_auth_user_can_follow_and_unfollow(self):
+        """ Авторизованный пользователь может подписываться на других
+            пользователей и удалять их из подписок."""
+        response = self.authorized_client.get(reverse('posts:profile_follow',
+                                              kwargs={'username':
+                                                      self.user2.username}
+                                                      ))
+        self.assertTrue(
+            Follow.objects.filter(user=self.user, author=self.user2)
+        )
+        response = self.authorized_client.get(reverse('posts:profile_unfollow',
+                                                      kwargs={'username':
+                                                               self.user2.
+                                                               username}
+                                                      ))
+        self.assertFalse(
+            Follow.objects.filter(user=self.user, author=self.user2)
+        )
+
+    def test_correct_following_feed(self):
+        """ Новая запись пользователя появляется в ленте тех, кто на него
+            подписан и не появляется в ленте тех, кто не подписан на него."""
+        subscriber = User.objects.create_user(username='subscriber')
+        not_subscriber = User.objects.create_user(username='not_subscriber')
+        sub_client = Client()
+        sub_client.force_login(subscriber)
+
+        not_sub_client = Client()
+        not_sub_client.force_login(not_subscriber)
+
+        response = sub_client.get(reverse('posts:follow_index'))
+        sub_count = response.context['paginator'].count
+        response = not_sub_client.get(reverse('posts:follow_index'))
+        not_sub_count = response.context['paginator'].count
+
+        self.assertEqual(sub_count, not_sub_count, "По какой то причине у новых"
+                                                   "пользователей разное "
+                                                   "количество постов")
+
+        sub_client.get(reverse('posts:profile_follow',
+                                kwargs={'username': self.user2.username}))
+
+        Post.objects.create(
+            text='Проверочный текст для подписчиков',
+            author=PostPagesTests.user2,
+            group=PostPagesTests.group,
+            image=PostPagesTests.uploaded
+        )
+
+        response = sub_client.get(reverse('posts:follow_index'))
+        sub_count = response.context['paginator'].count
+        response = not_sub_client.get(reverse('posts:follow_index'))
+        not_sub_count = response.context['paginator'].count
+
+        self.assertNotEqual(sub_count, not_sub_count)
+
+
+
+        # response = self.authorized_client.get(reverse('posts:follow_index'))
+        # count = response.context['paginator'].count
+        # response = self.authorized_client.get(reverse('posts:profile_follow',
+        #                                               kwargs={'username':
+        #                                                        self.user2.
+        #                                                        username}
+        #                                               ))
+        # response = self.authorized_client.get(reverse('posts:follow_index'))
+        # self.assertEqual(count + 1, response.context['paginator'].count)
+        # response = self.authorized_client.get(reverse('posts:profile_unfollow',
+        #                                               kwargs={'username':
+        #                                                        self.user2.
+        #                                                        username}
+        #                                               ))
+        # self.assertEqual(count, response.context['paginator'].count)
+
+
+
 
 
 class PaginatorViewsTest(TestCase):
