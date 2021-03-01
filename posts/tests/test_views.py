@@ -7,7 +7,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
-from posts.models import Group, User, Post, Follow
+from posts.models import Group, User, Post, Follow, Comment
 
 
 class PostPagesTests(TestCase):
@@ -231,7 +231,7 @@ class PostPagesTests(TestCase):
 
         self.assertEqual(sub_count, not_sub_count, "По какой то причине у новых"
                                                    "пользователей разное "
-                                                   "количество постов")
+                                                   "количество постов в ленте")
 
         sub_client.get(reverse('posts:profile_follow',
                                 kwargs={'username': self.user2.username}))
@@ -250,26 +250,22 @@ class PostPagesTests(TestCase):
 
         self.assertNotEqual(sub_count, not_sub_count)
 
-
-
-        # response = self.authorized_client.get(reverse('posts:follow_index'))
-        # count = response.context['paginator'].count
-        # response = self.authorized_client.get(reverse('posts:profile_follow',
-        #                                               kwargs={'username':
-        #                                                        self.user2.
-        #                                                        username}
-        #                                               ))
-        # response = self.authorized_client.get(reverse('posts:follow_index'))
-        # self.assertEqual(count + 1, response.context['paginator'].count)
-        # response = self.authorized_client.get(reverse('posts:profile_unfollow',
-        #                                               kwargs={'username':
-        #                                                        self.user2.
-        #                                                        username}
-        #                                               ))
-        # self.assertEqual(count, response.context['paginator'].count)
-
-
-
+    def test_comments_only_for_auth_users(self):
+        form_data = {
+            'text': 'Просто класс!',
+        }
+        login_reverse = reverse('login')
+        new_comment_reverse = reverse('posts:add_comment', kwargs={'username':
+                                                 PostPagesTests.user2.username,
+                                                 'post_id':
+                                                 PostPagesTests.post.id})
+        response = self.guest_client.post(
+            new_comment_reverse,
+            data=form_data,
+            follow=True
+        )
+        full_path = f'{login_reverse}?next={new_comment_reverse}'
+        self.assertRedirects(response, full_path)
 
 
 class PaginatorViewsTest(TestCase):
