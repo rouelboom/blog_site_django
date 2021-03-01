@@ -7,7 +7,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
-from posts.models import Group, User, Post, Follow, Comment
+from posts.models import Group, User, Post, Follow
 
 
 class PostPagesTests(TestCase):
@@ -197,18 +197,17 @@ class PostPagesTests(TestCase):
     def test_auth_user_can_follow_and_unfollow(self):
         """ Авторизованный пользователь может подписываться на других
             пользователей и удалять их из подписок."""
-        response = self.authorized_client.get(reverse('posts:profile_follow',
-                                              kwargs={'username':
-                                                      self.user2.username}
-                                                      ))
+        self.authorized_client.get(reverse('posts:profile_follow',
+                                           kwargs={'username':
+                                                   self.user2.username}))
+
         self.assertTrue(
             Follow.objects.filter(user=self.user, author=self.user2)
         )
-        response = self.authorized_client.get(reverse('posts:profile_unfollow',
-                                                      kwargs={'username':
-                                                               self.user2.
-                                                               username}
-                                                      ))
+        self.authorized_client.get(reverse('posts:profile_unfollow',
+                                           kwargs={'username':
+                                                   self.user2.username}))
+
         self.assertFalse(
             Follow.objects.filter(user=self.user, author=self.user2)
         )
@@ -229,12 +228,12 @@ class PostPagesTests(TestCase):
         response = not_sub_client.get(reverse('posts:follow_index'))
         not_sub_count = response.context['paginator'].count
 
-        self.assertEqual(sub_count, not_sub_count, "По какой то причине у новых"
+        self.assertEqual(sub_count, not_sub_count, "По какойто причине у новых"
                                                    "пользователей разное "
                                                    "количество постов в ленте")
 
         sub_client.get(reverse('posts:profile_follow',
-                                kwargs={'username': self.user2.username}))
+                               kwargs={'username': self.user2.username}))
 
         Post.objects.create(
             text='Проверочный текст для подписчиков',
@@ -255,10 +254,11 @@ class PostPagesTests(TestCase):
             'text': 'Просто класс!',
         }
         login_reverse = reverse('login')
-        new_comment_reverse = reverse('posts:add_comment', kwargs={'username':
-                                                 PostPagesTests.user2.username,
-                                                 'post_id':
-                                                 PostPagesTests.post.id})
+        new_comment_reverse = reverse('posts:add_comment',
+                                      kwargs={'username':
+                                              PostPagesTests.user2.username,
+                                              'post_id':
+                                              PostPagesTests.post.id})
         response = self.guest_client.post(
             new_comment_reverse,
             data=form_data,
