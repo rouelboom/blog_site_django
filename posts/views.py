@@ -57,12 +57,9 @@ def profile(request, username):
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
 
-    following = author.following.all()
-    followers = author.follower.all()
+    followers = Follow.objects.filter(user=author).all()
+    following = Follow.objects.filter(author=author).all()
 
-    # print(followers[1].user.username)
-    print(len(following))
-    print(len(followers))
     context = {'author': author,
                'page': page,
                'paginator': paginator,
@@ -151,12 +148,13 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    if not request.user == author:
-        Follow.objects.get_or_create(
-            user=request.user,
-            author=author
-        )
+    if request.user == author:
         return redirect('posts:profile', username)
+
+    Follow.objects.get_or_create(
+        user=request.user,
+        author=author,
+    )
     return redirect('posts:profile', username)
 
 
