@@ -11,7 +11,7 @@ from .models import Post, Group, User, Comment, Follow
 
 
 def index(request):
-    post_list = Post.objects.all()
+    post_list = Post.objects.select_related('group').all()
 
     paginator = Paginator(post_list, settings.PAGINATOR_LENTH)
     page_number = request.GET.get('page')
