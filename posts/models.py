@@ -60,7 +60,7 @@ class Comment(models.Model):
     created = models.DateTimeField("Дата публикации", auto_now_add=True)
 
     class Meta:
-        ordering = ['-created']
+        ordering = ["-created"]
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
 
@@ -80,8 +80,8 @@ class Follow(models.Model):
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
         constraints = [
-            models.UniqueConstraint(fields=('user', 'author'), name='no_twice')
+            models.UniqueConstraint(fields=("user", "author"), name="no_twice")
         ]
 
     def __str__(self):
-        return f'{self.user} является подписчиков {self.author}'
+        return f"{self.user} является подписчиков {self.author}"

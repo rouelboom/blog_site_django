@@ -9,8 +9,8 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ('text', 'group', 'image')
 
-        widgets = {"text": Textarea(attrs={"placeholder":
-                                           "Введите текст записи",
+        widgets = {'text': Textarea(attrs={'placeholder':
+                                           'Введите текст записи',
                                            })}
 
 
@@ -19,7 +19,7 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ('text',)
 
-        widgets = {"text": Textarea(attrs={"placeholder":
-                                           "Ваш комментарий очень важен для "
-                                           "нас",
+        widgets = {'text': Textarea(attrs={'placeholder':
+                                           'Ваш комментарий очень важен для '
+                                           'нас',
                                            })}

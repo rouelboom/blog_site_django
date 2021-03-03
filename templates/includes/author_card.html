@@ -11,7 +11,7 @@
                 <li class="list-group-item">
                         <div class="h6 text-muted">
                         Подписчиков: {{ following.count }} <br />
-                        Подписан: XXX
+                        Подписан: {{ followers.count }}
                         </div>
                 </li>
                 <li class="list-group-item">
@@ -19,9 +19,9 @@
                             Записей: {{ author.posts.count }}
                         </div>
                 </li>
-                {% if not author.username == user.username %}
+                {% if not author == user %}
                     <li class="list-group-item">
-                        {% if following %}
+                        {% if is_user_follow %}
                         <a class="btn btn-lg btn-light"
                                 href="{% url 'posts:profile_unfollow' author.username %}" role="button">
                                 Отписаться

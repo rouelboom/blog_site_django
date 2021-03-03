@@ -8,6 +8,13 @@ class PostUrlTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
 
+        cls.user = User.objects.create_user(username='Pavel')
+
+        cls.post = Post.objects.create(
+            text="Тестовый текст",
+            author=cls.user
+        )
+
         Group.objects.create(
             title='Тестовый заголовок',
             description='Тестовое описание',
@@ -18,26 +25,21 @@ class PostUrlTest(TestCase):
             '/': 'index.html',
             '/group/test-slug/': 'group.html',
             '/new/': 'new_post.html',
-            '/Pavel/': 'profile.html',
-            '/Pavel/1/': 'post.html',
-            '/Pavel/1/edit/': 'new_post.html'
+            f'/{cls.user.username}/': 'profile.html',
+            f'/{cls.user.username}/{cls.post.id}/': 'post.html',
+            f'/{cls.user.username}/{cls.post.id}/edit/': 'new_post.html'
         }
         cls.pages_and_redirects = {
             '/new/': '/auth/login/?next=/new/',
-            '/Pavel/1/edit/': '/auth/login/?next=/Pavel/1/edit/'
+            f'/{cls.user.username}/{cls.post.id}/edit/':
+            f'/auth/login/?next=/{cls.user.username}/{cls.post.id}/edit/'
         }
 
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create_user(username='Pavel')
-        Post.objects.create(
-            text="Тестовый текст",
-            author=self.user
-            # тут был id, как оказалось, я его не использолал :)
-            # комментарий после ревью уберу
-        )
+
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(PostUrlTest.user)
 
     def test_urls_correct_template(self):
         for reverse_name, template in PostUrlTest.templates_url_names.items():
@@ -58,12 +60,15 @@ class PostUrlTest(TestCase):
                 self.assertRedirects(response, redirect_page)
 
     def test_visit_edit_post_page_by_author(self):
-        response = self.authorized_client.get('/Pavel/1/edit/')
+        response = self.authorized_client.get(f'/{PostUrlTest.user.username}/'
+                                              f'{PostUrlTest.post.id}/edit/')
         self.assertEqual(response.status_code, 200)
 
     def test_visit_edit_post_page_by_authorized_user_but_not_author(self):
         user = User.objects.create(username='NotPavel')
         authorized_client = Client()
         authorized_client.force_login(user)
-        response = authorized_client.get('/Pavel/1/edit/')
-        self.assertRedirects(response, '/Pavel/1/')
+        response = authorized_client.get(f'/{PostUrlTest.user.username}/'
+                                         f'{PostUrlTest.post.id}/edit/')
+        self.assertRedirects(response, f'/{PostUrlTest.user.username}/'
+                                       f'{PostUrlTest.post.id}/')
