@@ -15,7 +15,7 @@ class PostUrlTest(TestCase):
             author=cls.user
         )
 
-        Group.objects.create(
+        cls.grp = Group.objects.create(
             title='Тестовый заголовок',
             description='Тестовое описание',
             slug='test-slug'
@@ -23,7 +23,7 @@ class PostUrlTest(TestCase):
 
         cls.templates_url_names = {
             '/': 'index.html',
-            '/group/test-slug/': 'group.html',
+            f'/group/{cls.grp.slug}/': 'group.html',
             '/new/': 'new_post.html',
             f'/{cls.user.username}/': 'profile.html',
             f'/{cls.user.username}/{cls.post.id}/': 'post.html',

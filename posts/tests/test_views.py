@@ -194,7 +194,7 @@ class PostPagesTests(TestCase):
         response = self.client.get('/not_valid_url/')
         self.assertTemplateUsed(response, 'misc/404.html')
 
-    def test_auth_user_can_follow_and_unfollow(self):
+    def test_auth_user_can_follow(self):
         """ Авторизованный пользователь может подписываться на других
             пользователей и удалять их из подписок."""
         self.authorized_client.get(reverse('posts:profile_follow',
@@ -204,6 +204,13 @@ class PostPagesTests(TestCase):
         self.assertTrue(
             Follow.objects.filter(user=self.user, author=self.user2)
         )
+
+    def test_auth_user_can_unfollow(self):
+        """ Авторизованный пользователь может подписываться на других
+                    пользователей и удалять их из подписок."""
+        self.authorized_client.get(reverse('posts:profile_follow',
+                                           kwargs={'username':
+                                                   self.user2.username}))
         self.authorized_client.get(reverse('posts:profile_unfollow',
                                            kwargs={'username':
                                                    self.user2.username}))
