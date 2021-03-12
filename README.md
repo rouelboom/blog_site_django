@@ -1,1 +1,1 @@
-# hw05_final
+# blog_django
